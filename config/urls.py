@@ -10,6 +10,7 @@ def firebase_status(request):
     return JsonResponse(status)
 
 urlpatterns = [
+    
     path('', TemplateView.as_view(template_name='index.html'), name='home'),
     path('api/schema/', SpectacularAPIView.as_view(), name='schema'),
     path('api/docs/', SpectacularSwaggerView.as_view(url_name='schema'), name='swagger-ui'),
