@@ -9,20 +9,33 @@ DEBUG = config('DEBUG', default=True, cast=bool)
 ALLOWED_HOSTS = ['*', 'localhost', '127.0.0.1']
 
 INSTALLED_APPS = [
-    'django.contrib.contenttypes',
+    'cloudinary_storage',  # 1. SIEMPRE debe ir antes de staticfiles
+    'django.contrib.admin',
     'django.contrib.auth',
-    'django.contrib.staticfiles',
+    'django.contrib.contenttypes',
+    'django.contrib.sessions',
+    'django.contrib.messages',
+    'django.contrib.staticfiles', # 2. staticfiles va después de storage
+    
+    # Librerías de terceros
     'rest_framework',
     'corsheaders',
     'drf_spectacular',
+    'cloudinary', # 3. La librería base suele ir al final de las de terceros
+    
+    # Tus aplicaciones locales
     'apps.users',
     'apps.tasks',
 ]
-
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'django.contrib.sessions.middleware.SessionMiddleware', # Agregado
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.common.CommonMiddleware',
+    'django.middleware.csrf.CsrfViewMiddleware', # Agregado
+    'django.contrib.auth.middleware.AuthenticationMiddleware', # Agregado
+    'django.contrib.messages.middleware.MessageMiddleware', # Agregado
+    'django.middleware.clickjacking.XFrameOptionsMiddleware', # Agregado
 ]
 
 ROOT_URLCONF = 'config.urls'
@@ -34,7 +47,10 @@ TEMPLATES = [
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
+                'django.template.context_processors.debug', # Agregado
                 'django.template.context_processors.request',
+                'django.contrib.auth.context_processors.auth', # Agregado
+                'django.contrib.messages.context_processors.messages', # Agregado
             ],
         },
     },
