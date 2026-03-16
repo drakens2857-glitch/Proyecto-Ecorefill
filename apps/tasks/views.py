@@ -7,7 +7,6 @@ from drf_spectacular.utils import extend_schema
 from .serializers import TaskSerializer, TaskCreateSerializer, TaskUpdateSerializer
 from firebase_utils import get_firestore_client, get_user_from_token, is_admin
 
-
 class TaskListCreateView(APIView):
     @extend_schema(
         summary="Listar mis tareas",
@@ -73,7 +72,6 @@ class TaskListCreateView(APIView):
             {'message': 'Tarea creada exitosamente.', 'id': doc_ref.id, **task_data},
             status=status.HTTP_201_CREATED
         )
-
 
 class TaskDetailView(APIView):
     def _get_task_and_check(self, request, task_id):
@@ -149,7 +147,6 @@ class TaskDetailView(APIView):
 
         task_ref.delete()
         return Response({'message': 'Tarea eliminada correctamente.', 'id': task_id})
-
 
 class AllTasksView(APIView):
     @extend_schema(
