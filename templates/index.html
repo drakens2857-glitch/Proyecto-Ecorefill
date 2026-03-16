@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Eco-Refill</title>
+  <link rel="stylesheet" href="/static/css/style.css" />
+</head>
+
+<body>
+
+  <!-- NAV -->
+  <nav id="navbar" class="navbar hidden">
+    <div class="nav-brand"><span class="leaf">🌿</span> Eco-Refill</div>
+    <div class="nav-links">
+      <span id="nav-user-name"></span>
+      <span id="nav-user-role" class="role-badge"></span>
+      <button onclick="showSection('tasks')" class="btn btn-sm btn-outline">Mis Tareas</button>
+      <button id="btn-admin-users" onclick="showSection('admin-users')"
+        class="btn btn-sm btn-outline hidden">Usuarios</button>
+      <button id="btn-admin-tasks" onclick="showSection('admin-tasks')" class="btn btn-sm btn-outline hidden">Todas las
+        Tareas</button>
+      <div id="nav-avatar" class="nav-avatar" onclick="openPhotoModal()" title="Cambiar foto de perfil"></div>
+      <button onclick="logout()" class="btn btn-sm btn-danger">Salir</button>
+    </div>
+  </nav>
+
+  <!-- AUTH SECTION -->
+  <section id="section-auth" class="hero-section">
+    <div class="hero-content">
+      <div class="logo-big">🌿</div>
+      <h1>Eco-Refill</h1>
+      <p class="subtitle">Sistema de Recargas de Productos de Aseo</p>
+      <p class="description">Reduce residuos plásticos, reutiliza tus envases.</p>
+      <div class="auth-tabs">
+        <button class="tab-btn active" onclick="switchTab('login')">Iniciar Sesión</button>
+        <button class="tab-btn" onclick="switchTab('register')">Registrarse</button>
+      </div>
+      <!-- LOGIN -->
+      <div id="tab-login" class="auth-form">
+        <div class="form-group">
+          <label>Correo Electrónico</label>
+          <input type="email" id="login-email" placeholder="correo@ejemplo.com" />
+        </div>
+        <div class="form-group">
+          <label>Contraseña</label>
+          <input type="password" id="login-password" placeholder="Tu contraseña" />
+        </div>
+        <div id="login-error" class="alert alert-error hidden"></div>
+        <button onclick="login()" class="btn btn-primary btn-full">Entrar</button>
+      </div>
+      <!-- REGISTER -->
+      <div id="tab-register" class="auth-form hidden">
+        <div class="form-group">
+          <label>Nombre Completo</label>
+          <input type="text" id="reg-nombre" placeholder="Tu nombre completo" />
+        </div>
+        <div class="form-group">
+          <label>Correo Electrónico</label>
+          <input type="email" id="reg-email" placeholder="correo@ejemplo.com" />
+        </div>
+        <div class="form-group">
+          <label>Contraseña</label>
+          <input type="password" id="reg-password" placeholder="Mínimo 6 caracteres" />
+        </div>
+        <div class="form-group">
+          <label>Rol</label>
+          <select id="reg-rol">
+            <option value="trabajador">Trabajador</option>
+            <option value="administrador">Administrador</option>
+          </select>
+        </div>
+        <div id="reg-error" class="alert alert-error hidden"></div>
+        <div id="reg-success" class="alert alert-success hidden"></div>
+        <button onclick="register()" class="btn btn-primary btn-full">Crear Cuenta</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- TASKS SECTION -->
+  <section id="section-tasks" class="main-section hidden">
+    <div class="container">
+      <div class="section-header">
+        <h2>Mis Tareas / Solicitudes</h2>
+        <button onclick="openCreateTaskModal()" class="btn btn-primary">+ Nueva Tarea</button>
+      </div>
+      <div id="tasks-stats" class="stats-bar"></div>
+      <div id="tasks-list" class="tasks-grid"></div>
+    </div>
+  </section>
+
+  <!-- ADMIN USERS SECTION -->
+  <section id="section-admin-users" class="main-section hidden">
+    <div class="container">
+      <div class="section-header">
+        <h2>Gestión de Usuarios</h2>
+      </div>
+      <div id="users-list" class="users-grid"></div>
+    </div>
+  </section>
+
+  <!-- ADMIN ALL TASKS SECTION -->
+  <section id="section-admin-tasks" class="main-section hidden">
+    <div class="container">
+      <div class="section-header">
+        <h2>Todas las Tareas del Sistema</h2>
+      </div>
+      <div id="admin-tasks-stats" class="stats-bar"></div>
+      <div id="admin-tasks-list" class="tasks-grid"></div>
+    </div>
+  </section>
+
+  <!-- MODAL: FOTO DE PERFIL -->
+  <div id="modal-photo" class="modal hidden">
+    <div class="modal-overlay" onclick="closeModal('modal-photo')"></div>
+    <div class="modal-box modal-sm">
+      <div class="modal-header">
+        <h3>📷 Foto de Perfil</h3>
+        <button onclick="closeModal('modal-photo')" class="modal-close">✕</button>
+      </div>
+      <div class="modal-body" style="text-align:center;">
+        <img id="photo-preview" src="" alt="preview" class="photo-preview hidden" />
+        <div class="photo-upload-area" onclick="document.getElementById('photo-input').click()">
+          <div class="photo-upload-icon">📁</div>
+          <p>Haz clic para seleccionar una imagen</p>
+          <p class="photo-hint">JPG, PNG o WEBP — máx. 5 MB</p>
+        </div>
+        <input type="file" id="photo-input" accept="image/*" class="hidden" onchange="onPhotoSelected(this)" />
+        <div id="photo-error" class="alert alert-error hidden"></div>
+      </div>
+      <div class="modal-footer">
+        <button onclick="closeModal('modal-photo')" class="btn btn-outline">Cancelar</button>
+        <button onclick="uploadPhoto()" class="btn btn-primary" id="btn-upload-photo">Subir Foto</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: CREAR/EDITAR TAREA -->
+  <div id="modal-task" class="modal hidden">
+    <div class="modal-overlay" onclick="closeModal('modal-task')"></div>
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3 id="modal-task-title">Nueva Tarea</h3>
+        <button onclick="closeModal('modal-task')" class="modal-close">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label>Título *</label>
+          <input type="text" id="task-titulo" placeholder="Título de la tarea" />
+        </div>
+        <div class="form-group">
+          <label>Descripción *</label>
+          <textarea id="task-descripcion" rows="3" placeholder="Detalla la solicitud..."></textarea>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Producto</label>
+            <select id="task-producto">
+              <option value="">Seleccionar...</option>
+              <option value="Jabón Líquido">Jabón Líquido</option>
+              <option value="Detergente">Detergente</option>
+              <option value="Suavizante">Suavizante</option>
+              <option value="Limpiador Multiusos">Limpiador Multiusos</option>
+              <option value="Desinfectante">Desinfectante</option>
+              <option value="Otro">Otro</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Cantidad</label>
+            <input type="number" id="task-cantidad" placeholder="0" min="0" step="0.1" />
+          </div>
+          <div class="form-group">
+            <label>Unidad</label>
+            <select id="task-unidad">
+              <option value="litros">Litros</option>
+              <option value="kg">Kg</option>
+              <option value="unidades">Unidades</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Estado</label>
+            <select id="task-estado">
+              <option value="pendiente">Pendiente</option>
+              <option value="en_proceso">En Proceso</option>
+              <option value="completada">Completada</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Prioridad</label>
+            <select id="task-prioridad">
+              <option value="baja">Baja</option>
+              <option value="media">Media</option>
+              <option value="alta">Alta</option>
+            </select>
+          </div>
+        </div>
+        <div id="task-error" class="alert alert-error hidden"></div>
+      </div>
+      <div class="modal-footer">
+        <button onclick="closeModal('modal-task')" class="btn btn-outline">Cancelar</button>
+        <button onclick="saveTask()" class="btn btn-primary" id="btn-save-task">Guardar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: CONFIRMAR ELIMINAR -->
+  <div id="modal-confirm" class="modal hidden">
+    <div class="modal-overlay" onclick="closeModal('modal-confirm')"></div>
+    <div class="modal-box modal-sm">
+      <div class="modal-header">
+        <h3>Confirmar Eliminación</h3>
+        <button onclick="closeModal('modal-confirm')" class="modal-close">✕</button>
+      </div>
+      <div class="modal-body">
+        <p id="confirm-message">¿Estás seguro?</p>
+      </div>
+      <div class="modal-footer">
+        <button onclick="closeModal('modal-confirm')" class="btn btn-outline">Cancelar</button>
+        <button onclick="confirmDelete()" class="btn btn-danger">Eliminar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- TOAST -->
+  <div id="toast" class="toast hidden"></div>
+
+  <script src="/static/js/app.js"></script>
+
+  <div id="ai-chat-wrapper">
+    <button class="ai-fab" onclick="toggleChat()">
+      <span class="icon">🤖</span>
+    </button>
+
+    <div id="ai-window" class="ai-window ai-hidden">
+      <div class="ai-header">
+        <span>Asistente Eco-Refill</span>
+        <button onclick="toggleChat()" class="close-btn">&times;</button>
+      </div>
+
+      <div id="ai-messages" class="ai-body">
+        <div class="msg bot">
+          ¡Hola! Puedo ayudarte a gestionar tus tareas de reciclaje (crear, borrar o consultar). ¿Qué necesitas?
+        </div>
+      </div>
+
+      <div class="ai-footer">
+        <input type="text" id="ai-input" placeholder="Escribe un mensaje..." onkeypress="handleKeyPress(event)">
+        <button onclick="sendMessage()">➤</button>
+      </div>
+    </div>
+  </div>
+</body>
+
+</html>
