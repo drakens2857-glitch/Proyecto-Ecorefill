@@ -87,46 +87,57 @@ def consultar_mis_tareas(token_firebase: str):
         return {"error": str(e)}
 
 
+from firebase_admin import firestore
+from firebase_utils import get_firestore_client, verify_firebase_token
+
 def crear_tarea(token_firebase: str, titulo: str, descripcion: str = ""):
-
-    db = get_firestore_client()
-
-    data = {
-        "titulo": titulo,
-        "descripcion": descripcion,
-        "estado": "pendiente",
-        "prioridad": "media",
-        "producto": "",
-        "cantidad": 0,
-        "unidad": "litros",
-        "fecha_creacion": time.strftime("%Y-%m-%d"),
-        "creado_por_uid": token_firebase,
-        "creado_por_nombre": "IA"
-    }
-
-    doc_ref = db.collection("tasks").add(data)
-
-    return {
-        "id": doc_ref[1].id,
-        "mensaje": "Tarea creada correctamente"
-    }
-def eliminar_tarea(token_firebase: str, tarea_id: str):
-    """Elimina una tarea"""
-
     try:
-
+        # 1. Obtener el UID real del usuario (ej: rc8atA...)
+        user = verify_firebase_token(token_firebase)
+        if not user:
+            return {"error": "Token inválido"}
+        
         db = get_firestore_client()
+        uid_real = user['uid']
 
-        db.collection("tasks").document(tarea_id).delete()
-
-        return {
-            "mensaje": f"Tarea {tarea_id} eliminada correctamente"
+        # 2. Diccionario con los nombres de campos EXACTOS de tu captura manual
+        data = {
+            "titulo": titulo,
+            "descripcion": descripcion,
+            "estado": "pendiente",
+            "prioridad": "media",
+            "producto": "Limpiador Multiusos",
+            "cantidad": 1,
+            "unidad": "litros",
+            # IMPORTANTE: Firebase requiere este objeto para poder listar las tareas
+            "fecha_creacion": firestore.SERVER_TIMESTAMP,
+            "fecha_actualizacion": firestore.SERVER_TIMESTAMP,
+            "creado_por_uid": uid_real, # Nombre exacto del campo manual
+            "creado_por_nombre": user.get('name', 'Frankin villalba')
         }
 
+        # 3. Guardar obligatoriamente en 'tasks'
+        doc_ref = db.collection("tasks").add(data)
+
+        return {
+            "id": doc_ref[1].id,
+            "mensaje": "¡Logrado! La tarea ya está en la misma carpeta que las manuales."
+        }
     except Exception as e:
-
         return {"error": str(e)}
-
+def eliminar_tarea(token_firebase: str, tarea_id: str):
+    """Elimina una tarea de la colección 'tasks'."""
+    try:
+        # Verificamos que el usuario tenga permiso
+        user = verify_firebase_token(token_firebase)
+        if not user: return {"error": "No autorizado"}
+        
+        db = get_firestore_client()
+        # Eliminamos de la colección 'tasks' (no 'tareas')
+        db.collection("tasks").document(tarea_id).delete()
+        return {"mensaje": f"Tarea {tarea_id} eliminada correctamente"}
+    except Exception as e:
+        return {"error": str(e)}
 
 # --------------------------------
 # 3. INICIAR ASISTENTE
