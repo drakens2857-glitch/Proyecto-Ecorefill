@@ -7,3 +7,4 @@ django-cors-headers>=4.3
 requests>=2.31
 cloudinary>=1.36
 google-genai>=1.0
+django-cloudinary-storage>=0.9
