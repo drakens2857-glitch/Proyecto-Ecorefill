@@ -83,7 +83,7 @@ correctamente.
 
 ### 1. Crear el entorno virtual
 
-py -m venv venv
+` py -m venv venv `
 
 ### 2. Activar el entorno virtual
 
@@ -91,19 +91,19 @@ py -m venv venv
 
 ### 3. Instalar las dependencias
 
-pip install Django 
-pip install djangorestframework 
-pip install drf-spectacular 
-pip install firebase-admin 
-pip install python-decouple
-pip install django-cors-headers 
-pip install requests 
-pip install cloudinary 
-pip install google-genai
+` pip install Django `
+` pip install djangorestframework `
+` pip install drf-spectacular `
+` pip install firebase-admin `
+` pip install python-decouple `
+` pip install django-cors-headers ` 
+` pip install requests `
+` pip install cloudinary `
+` pip install google-genai `
 
 ### 4. Clonar el repositorio
 
-git clone "LINK_HTTPS_DEL_REPOSITORIO"
+` git clone "LINK_HTTPS_DEL_REPOSITORIO" `
 
 ### 5. Crear archivo .env
 
