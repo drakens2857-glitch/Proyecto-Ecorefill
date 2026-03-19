@@ -123,7 +123,7 @@ conexión con la base de datos donde se almacenará la información.
 
 ### 7. Ejecutar el servidor
 
-python manage.py runserver
+`python manage.py runserver`
 
 ------------------------------------------------------------------------
 
