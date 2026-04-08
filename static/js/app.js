@@ -48,13 +48,22 @@ function switchTab(tab) {
 }
 
 async function apiFetch(path, method = 'GET', body = null) {
-  const opts = { method, headers: { 'Content-Type': 'application/json' } };
-  if (currentUser && currentUser.idToken) {
-    opts.headers['Authorization'] = 'Bearer ' + currentUser.idToken;
+  const opts = {
+    method,
+    headers: { 'Content-Type': 'application/json' }
+  };
+
+  const token = localStorage.getItem("token"); // 🔥 CLAVE
+
+  if (token) {
+    opts.headers['Authorization'] = 'Bearer ' + token;
   }
+
   if (body) opts.body = JSON.stringify(body);
+
   const res = await fetch(API_BASE + path, opts);
   const data = await res.json();
+
   return { ok: res.ok, status: res.status, data };
 }
 
@@ -92,17 +101,37 @@ async function register() {
 
 async function login() {
   hideError('login-error');
+
   const email = document.getElementById('login-email').value.trim();
   const password = document.getElementById('login-password').value;
-  if (!email || !password) { showError('login-error', 'Por favor completa todos los campos.'); return; }
+
+  if (!email || !password) {
+    showError('login-error', 'Por favor completa todos los campos.');
+    return;
+  }
+
   const { ok, data } = await apiFetch('/users/login/', 'POST', { email, password });
+  console.log("DATA LOGIN:", data);
+
   if (ok) {
     currentUser = data;
+
+    // 🔥 GUARDAR USUARIO
     localStorage.setItem('ecoUser', JSON.stringify(data));
+
+    // 🔥 GUARDAR TOKEN (AQUÍ CORRECTO)
+    const token = data.token || data.idToken;  // 👈 soporta ambos casos
+    localStorage.setItem("token", token);
+
+    console.log("TOKEN GUARDADO:", token);
+
     afterLogin();
+
   } else {
     const msg = ['INVALID_LOGIN_CREDENTIALS', 'EMAIL_NOT_FOUND', 'INVALID_PASSWORD'].includes(data.error)
-      ? 'Correo o contraseña incorrectos.' : (data.error || 'Error al iniciar sesión.');
+      ? 'Correo o contraseña incorrectos.'
+      : (data.error || 'Error al iniciar sesión.');
+
     showError('login-error', msg);
   }
 }
@@ -240,6 +269,28 @@ function renderStats(tasks) {
     <div class="stat-chip"><div class="stat-dot dot-completada"></div>${c.completada} Completadas</div>
     <div class="stat-chip">📋 Total: ${tasks.length}</div>`;
 }
+async function cargarEstadisticas() {
+  const { ok, data } = await apiFetch('/tasks/estadisticas/');
+
+  if (!ok) {
+    console.error("Error cargando estadísticas");
+    return;
+  }
+
+  console.log("STATS BACKEND:", data);
+
+  const statsBar = document.getElementById('tasks-stats');
+
+  if (!statsBar) return;
+
+  statsBar.innerHTML = `
+    <div class="stat-chip">📊 <b>${data.porcentaje_completado}% completado</b></div>
+    <div class="stat-chip">📋 ${data.total} Total</div>
+    <div class="stat-chip">🟢 ${data.completadas} Completadas</div>
+    <div class="stat-chip">🔵 ${data.en_proceso} En proceso</div>
+    <div class="stat-chip">🟠 ${data.pendientes} Pendientes</div>
+  `;
+}
 
 function renderTasksWithPagination(tasks, listId, statsId, showOwner, shownCount, loadMoreFn) {
   const list = document.getElementById(listId);
@@ -268,13 +319,30 @@ function renderTasksWithPagination(tasks, listId, statsId, showOwner, shownCount
 
 async function loadMyTasks() {
   const list = document.getElementById('tasks-list');
+
   list.innerHTML = '<div class="empty-state"><div class="empty-icon">⏳</div><p>Cargando...</p></div>';
+
   const { ok, data } = await apiFetch('/tasks/');
-  if (!ok) { list.innerHTML = `<div class="empty-state"><p>Error: ${data.error}</p></div>`; return; }
+
+  if (!ok) {
+    list.innerHTML = `<div class="empty-state"><p>Error: ${data.error}</p></div>`;
+    return;
+  }
+
   allMyTasks = data.tareas || [];
   myTasksShown = TASKS_PER_PAGE;
-  renderTasksWithPagination(allMyTasks, 'tasks-list', 'tasks-stats',
-    currentUser.rol === 'administrador', myTasksShown, 'loadMoreMyTasks');
+
+  renderTasksWithPagination(
+    allMyTasks,
+    'tasks-list',
+    'tasks-stats',
+    currentUser.rol === 'administrador',
+    myTasksShown,
+    'loadMoreMyTasks'
+  );
+
+  // 🔥 ESTA LÍNEA ES LA CLAVE
+  await cargarEstadisticas();
 }
 
 function loadMoreMyTasks() {
@@ -450,52 +518,59 @@ function handleKeyPress(e) {
 }
 
 async function sendMessage() {
-  const input = document.getElementById('ai-input');
-  const msgContainer = document.getElementById('ai-messages');
-  const text = input.value.trim();
+    const input = document.getElementById('ai-input');
+    const msgContainer = document.getElementById('ai-messages');
+    const text = input.value.trim();
 
-  if (!text) return;
+    if (!text) return;
 
-  // 1. Mostrar mensaje del usuario
-  msgContainer.innerHTML += `<div class="msg user">${text}</div>`;
-  input.value = '';
-  msgContainer.scrollTop = msgContainer.scrollHeight;
+    // 1. Mostrar mensaje del usuario
+    msgContainer.innerHTML += `<div class="msg user">${text}</div>`;
+    input.value = '';
+    msgContainer.scrollTop = msgContainer.scrollHeight;
 
-  try {
-    // CORRECCIÓN: Obtener el token desde currentUser o ecoUser (donde lo guarda tu login)
-    const userData = JSON.parse(localStorage.getItem('ecoUser'));
-    const token = userData ? userData.idToken : null;
+    try {
+        const userData = JSON.parse(localStorage.getItem('ecoUser'));
+        const token = userData ? userData.idToken : null;
 
-    if (!token) {
-        msgContainer.innerHTML += `<div class="msg bot">⚠️ Debes estar logueado para usar la IA.</div>`;
-        return;
+        if (!token) {
+            msgContainer.innerHTML += `<div class="msg bot">⚠️ Error: No se encontró el token de sesión. Reintenta loguearte.</div>`;
+            return;
+        }
+
+        // PRUEBA ESTA URL (con el / final es vital en Django)
+        const urlIA = '/api/ia/chat/'; 
+
+        const response = await fetch(urlIA, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({ mensaje: text })
+        });
+
+        // Si la respuesta no es 200, 201, etc.
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            const errorMsg = errorData.respuesta || errorData.error || `Error ${response.status}`;
+            msgContainer.innerHTML += `<div class="msg bot">⚠️ Servidor dice: ${errorMsg}</div>`;
+            return;
+        }
+
+        const data = await response.json();
+        const respuestaIA = data.respuesta || "No recibí respuesta de texto.";
+        msgContainer.innerHTML += `<div class="msg bot">${respuestaIA}</div>`;
+
+        // Refrescar si hay cambios
+        if (['creado', 'eliminado', 'actualizado', 'borrado'].some(w => respuestaIA.toLowerCase().includes(w))) {
+            setTimeout(() => loadMyTasks(), 1000);
+        }
+
+    } catch (error) {
+        console.error("DETALLE DEL ERROR:", error);
+        msgContainer.innerHTML += `<div class="msg bot">⚠️ No hay conexión con el servidor (Revisa si el servidor de Django está encendido).</div>`;
     }
-
-    const response = await fetch('/api/ia/chat/', { // Usamos ruta relativa por consistencia con tu API_BASE
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`
-      },
-      body: JSON.stringify({ mensaje: text })
-    });
-
-    const data = await response.json();
-
-    // 2. Mostrar respuesta de la IA
-    const respuestaIA = data.respuesta || "Acción procesada correctamente.";
-    msgContainer.innerHTML += `<div class="msg bot">${respuestaIA}</div>`;
     
-    // 3. MEJORA: Si la IA menciona que creó o eliminó algo, refrescamos la lista
-    const keywords = ['creado', 'eliminado', 'actualizado', 'borrado', 'lista'];
-    if (keywords.some(word => respuestaIA.toLowerCase().includes(word))) {
-        setTimeout(() => loadMyTasks(), 1500); // Recarga las tareas después de un breve delay
-    }
-
-  } catch (error) {
-    console.error("Error IA:", error);
-    msgContainer.innerHTML += `<div class="msg bot">⚠️ Error al conectar con el servicio de IA.</div>`;
-  }
-  
-  msgContainer.scrollTop = msgContainer.scrollHeight;
+    msgContainer.scrollTop = msgContainer.scrollHeight;
 }
