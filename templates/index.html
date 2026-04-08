@@ -85,7 +85,16 @@
         <h2>Mis Tareas / Solicitudes</h2>
         <button onclick="openCreateTaskModal()" class="btn btn-primary">+ Nueva Tarea</button>
       </div>
+
+      <!-- 🔥 BARRA DE PROGRESO -->
+      <div class="progress-container">
+        <div id="progress-bar"></div>
+      </div>
+      
+
+      <!-- stats actuales -->
       <div id="tasks-stats" class="stats-bar"></div>
+
       <div id="tasks-list" class="tasks-grid"></div>
     </div>
   </section>
@@ -247,7 +256,7 @@
       </div>
 
       <div class="ai-footer">
-        <input type="text" id="ai-input" placeholder="Escribe un mensaje espere..." onkeypress="handleKeyPress(event)">
+        <input type="text" id="ai-input" placeholder="Escribe un mensaje..." onkeypress="handleKeyPress(event)">
         <button onclick="sendMessage()">➤</button>
       </div>
     </div>
