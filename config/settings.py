@@ -9,6 +9,8 @@ DEBUG = config('DEBUG', default=True, cast=bool)
 ALLOWED_HOSTS = ['*', 'localhost', '127.0.0.1']
 
 INSTALLED_APPS = [
+    'daphne',
+    'channels',
     'cloudinary_storage',  # 1. SIEMPRE debe ir antes de staticfiles
     'django.contrib.admin',
     'django.contrib.auth',
@@ -18,6 +20,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles', # 2. staticfiles va después de storage
     
     # Librerías de terceros
+    
     'rest_framework',
     'corsheaders',
     'drf_spectacular',
@@ -90,3 +93,12 @@ FIREBASE_WEB_API_KEY = os.environ.get('FIREBASE_WEB_API_KEY', config('FIREBASE_W
 CLOUDINARY_CLOUD_NAME = os.environ.get('CLOUDINARY_CLOUD_NAME', config('CLOUDINARY_CLOUD_NAME', default=''))
 CLOUDINARY_API_KEY = os.environ.get('CLOUDINARY_API_KEY', config('CLOUDINARY_API_KEY', default=''))
 CLOUDINARY_API_SECRET = os.environ.get('CLOUDINARY_API_SECRET', config('CLOUDINARY_API_SECRET', default=''))
+# 🔥 CONFIGURACIÓN CHANNELS
+
+ASGI_APPLICATION = 'config.asgi.application'
+
+CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND": "channels.layers.InMemoryChannelLayer",
+    },
+}
