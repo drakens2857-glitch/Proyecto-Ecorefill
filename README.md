@@ -143,6 +143,8 @@ Las tecnologías utilizadas en este prototipo son:
 📄 
 https://docs.google.com/document/d/1XHGqoVcxy1JL-wiFlDK6rNiMyq8sQAST2F3LFDlJGwQ/edit?usp=sharing
 
+https://drive.google.com/file/d/1DT4-iHsEfVLG1QP3cCcEH3CqemyX5of3/view?usp=sharing
+
 ------------------------------------------------------------------------
 
 # 👤 Cuenta del Proyecto
